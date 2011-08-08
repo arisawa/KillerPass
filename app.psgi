@@ -10,7 +10,7 @@ my %URL_MAP = (
 my $app = sub {
     my $env = shift;
 
-    if ($env->{PATH_INFO} =~ m{^/killerpass/([^/]+)/([^/]+)$}) {
+    if ($env->{PATH_INFO} =~ m{^/killerpass/get/([^/]+)/([^/]+)$}) {
         my($key, $hash) = ($1, $2);
         my $url = defined $URL_MAP{$key} ? "$URL_MAP{$key}: " : "";
         my $info = KillerPass::get ($key, $hash);
@@ -20,12 +20,12 @@ my $app = sub {
     }
 
     # for test
-    # if ($env->{PATH_INFO} =~ m{^/set/ ([^/]+)/ ([^/]+)/([^/]+)$}) {
-    #     my $info = KillerPass::set($1, $2, $3);
-    #     return $info
-    #         ? [ 200, $CONTENT_TYPE, [ $url.$info ] ]
-    #         : [ 500, $CONTENT_TYPE, [ 'Unknown keys' ] ];
-    # }
+    if ($env->{PATH_INFO} =~ m{^/killerpass/set/([^/]+)/([^/]+)/([^/]+)$}) {
+        my $get_url = KillerPass::set($1, $2, $3);
+        return $get_url
+            ? [ 200, $CONTENT_TYPE, [ $get_url ] ]
+            : [ 500, $CONTENT_TYPE, [ 'Unknown keys' ] ];
+    }
 
     return [ 404, $CONTENT_TYPE, [ '404 Not Found' ] ];
 };
