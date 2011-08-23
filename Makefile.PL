@@ -4,11 +4,13 @@ all_from 'lib/KillerPass.pm';
 
 requires 'YAML::Tiny';
 requires 'Config::Pit';
-requires 'Task::Plack';
+requires 'Plack';
+requires 'Starlet';
+requires 'Server::Starter';
 requires 'IO::Interface::Simple';
 
 tests 't/*.t';
-#author_tests 'xt';
+author_tests 'xt';
 
 test_requires 'Test::More';
 auto_set_repository;

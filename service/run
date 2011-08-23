@@ -1,0 +1,37 @@
+#!/bin/sh
+
+exec 2>&1
+
+ABSPATH=$(cd ${0%/*} && echo $PWD/${0##*/})
+THISDIR=$(dirname $ABSPATH)
+
+APP_NAME=killerpass
+PSGI_FILE=app.psgi
+ENVFILE=env
+PLACK_HANDLER=Starlet
+PLACK_ENV=development
+PORT=8000
+
+[ -f $THISDIR/env ] && ENVFILE=$THISDIR/env
+source $ENVFILE
+
+[ -z $APP_HOME ]      && APP_HOME=/Users/arisawa/$APP_NAME
+[ -z $PERLBREW_HOME ] && PERLBREW_HOME=$APP_HOME/perlbrew
+[ -z $PERLBREW_ROOT ] && PERLBREW_ROOT=/Users/arisawa/perl5/$APP_NAME/perlbrew
+source $PERLBREW_ROOT/etc/bashrc
+
+exec env - \
+    PATH=$PATH \
+    APP_USER=$APP_USER \
+    PORT=$PORT \
+    PSGI_FILE=$PSGI_FILE \
+    PLACK_HANDLER=$PLACK_HANDLER \
+    PLACK_ENV=$PLACK_ENV \
+    EXTRA_ARGS="$EXTRA_ARGS" \
+    sh -c '
+       exec setuidgid $APP_USER \
+            start_server --port $PORT -- \
+            plackup -s $PLACK_HANDLER -a $PSGI_FILE -p $PORT -E $PLACK_ENV $EXTRA_ARGS
+'
+
+exit

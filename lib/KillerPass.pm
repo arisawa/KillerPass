@@ -27,7 +27,7 @@ sub get {
     return unless $pit_key;
 
     my $config = pit_get($pit_key);
-    return $config->{username}.'/'.$config->{password};
+    return ($config->{username}, $config->{password});
 }
 
 sub set {
@@ -47,13 +47,19 @@ sub set {
     my $address = '0';
     for my $if (IO::Interface::Simple->interfaces) {
         if ($if->name =~ /^(en0|bond0|eth0)$/) {
+            next unless $if->address;
             $address = $if->address;
             last;
         }
     }
-    sprintf "http://%s:%s/killerpass/%s/%s", $address, $port, $key, $hash;
+    my $url = sprintf "http://%s:%s/killerpass/get/%s/%s", $address, $port, $key, $hash;
+    set_link($url);
 }
 
+sub set_link {
+    my $url = shift;
+    $url ? qq|<a href="$url">$url</a>| : "";
+}
 
 1;
 
