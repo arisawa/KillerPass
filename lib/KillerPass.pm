@@ -52,8 +52,7 @@ sub set {
             last;
         }
     }
-    my $url = sprintf "http://%s:%s/killerpass/get/%s/%s", $address, $port, $key, $hash;
-    set_link($url);
+    sprintf "http://%s:%s/killerpass/get/%s/%s", $address, $port, $key, $hash;
 }
 
 sub set_link {
