@@ -24,8 +24,8 @@ my $app = sub {
     if ($env->{PATH_INFO} =~ m{^/killerpass/set/([^/]+)/([^/]+)/([^/]+)$}) {
         my $url = KillerPass::set($1, $2, $3);
         $url = KillerPass::set_link($url);
-        return $get_url
-            ? [ 200, $CONTENT_TYPE, [ $get_url ] ]
+        return $url
+            ? [ 200, $CONTENT_TYPE, [ $url ] ]
             : [ 500, $CONTENT_TYPE, [ 'Unknown keys' ] ];
     }
 
