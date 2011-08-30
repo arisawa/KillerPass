@@ -40,11 +40,15 @@ sub _pit_key {
 }
 
 sub set_password {
-    my ($key, $username, $password) = @_;
+    my ($urlkey, $username, $password) = @_;
 
     my $keys = LoadFile($keys_yaml);
-    my $hash = md5_hex($key.$username.$password.time());
-    my $pit_key = "killerpass:$key:$username";
+    my $urls = LoadFile($urls_yaml);
+
+    return unless defined $urls->{$urlkey};
+
+    my $hash = md5_hex($urlkey.$username.$password.time());
+    my $pit_key = "killerpass:$urlkey:$username";
     $keys->{$pit_key} = $hash;
 
     Config::Pit::set($pit_key, data => {
@@ -61,7 +65,7 @@ sub set_password {
             last;
         }
     }
-    my $url = sprintf "http://%s:%s/killerpass/get/%s/%s", $address, $port, $key, $hash;
+    my $url = sprintf "http://%s:%s/killerpass/get/%s/%s", $address, $port, $urlkey, $hash;
     _set_link($url);
 }
 
