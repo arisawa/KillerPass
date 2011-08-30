@@ -6,34 +6,43 @@ use YAML::Tiny qw(LoadFile DumpFile);
 use Digest::MD5 qw(md5_hex);
 use Time::HiRes qw(time);
 use Path::Class;
-use Config::Pit;
+use Config::Pit ();
 use IO::Interface::Simple;
 
 our $VERSION = '0.01';
 
 my $port = $ENV{PORT} || 5000;
 my $home = dir(__FILE__)->parent->parent;
-my $yaml = "$home/keys.yaml";
+my $keys_yaml = "$home/keys.yaml";
+my $urls_yaml = "$home/urls.yaml";
 
-sub get {
-    my ($key, $hash) = @_;
+sub get_password {
+    my ($urlkey, $hash) = @_;
 
-    my $keys = LoadFile($yaml);
-    my $pit_key;
-    map {
-        $pit_key = $_
-            if ($keys->{$_} eq $hash)
-    } keys %$keys;
+    my $keys = LoadFile($keys_yaml);
+    my $urls = LoadFile($urls_yaml);
+
+    return unless defined $urls->{$urlkey};
+
+    my $pit_key = _pit_key($keys, $hash);
     return unless $pit_key;
 
-    my $config = pit_get($pit_key);
-    return ($config->{username}, $config->{password});
+    my $config = Config::Pit::pit_get($pit_key);
+    my $url    = _set_link($urls->{$urlkey});
+
+    join '<br />', $url, $config->{username}, $config->{password};
 }
 
-sub set {
-    my ($key, $username, $password) = @_;
-    my $keys = LoadFile($yaml);
+sub _pit_key {
+    my ($keys, $hash) = @_;
+    my ($key) = grep { $keys->{$_} eq $hash } keys %$keys;
+    $key;
+}
 
+sub set_password {
+    my ($key, $username, $password) = @_;
+
+    my $keys = LoadFile($keys_yaml);
     my $hash = md5_hex($key.$username.$password.time());
     my $pit_key = "killerpass:$key:$username";
     $keys->{$pit_key} = $hash;
@@ -42,7 +51,7 @@ sub set {
         username => $username,
         password => $password,
     });
-    DumpFile($yaml, $keys);
+    DumpFile($keys_yaml, $keys);
 
     my $address = '0';
     for my $if (IO::Interface::Simple->interfaces) {
@@ -52,10 +61,24 @@ sub set {
             last;
         }
     }
-    sprintf "http://%s:%s/killerpass/get/%s/%s", $address, $port, $key, $hash;
+    my $url = sprintf "http://%s:%s/killerpass/get/%s/%s", $address, $port, $key, $hash;
+    _set_link($url);
 }
 
-sub set_link {
+sub urls {
+    my $urls = shift;
+    $urls ||= LoadFile($urls_yaml);
+
+    my $content = '<dt>site_key</dt><dd>site_url</dd>';
+    $content .= join "", map {
+        my $url = _set_link($urls->{$_});
+        "<dt>$_</dt><dd>$url</dd>"
+    } sort keys %$urls;
+
+    "<dl>$content</dl>";
+}
+
+sub _set_link {
     my $url = shift;
     $url ? qq|<a href="$url">$url</a>| : "";
 }
